@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Form</title>
+</head>
+<body>
+    <h1>Login Form</h1>
+    <form id="loginForm">
+        <label for="username">Username:</label>
+        <input type="text" id="username" name="username" required>
+
+        <label for="password">Password:</label>
+        <input type="password" id="password" name="password" required>
+
+        <button type="submit">Login</button>
+    </form>
+
+    <div id="errorMessage" style="color: red;"></div>
+
+    <script src="https://cdn.socket.io/4.1.2/socket.io.min.js"></script>
+    <script>
+        const socket = io('http://localhost:3000');
+
+        document.getElementById('loginForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            socket.emit('login', { username, password });
+        });
+
+        socket.on('authResponse', (response) => {
+            console.log('Authentication Response:', response);
+
+            if (response.success) {
+                window.location.href = 'jeu.html'
+
+            } else {
+                document.getElementById('errorMessage').textContent = response.message;
+            }
+        });
+    </script>
+</body>
+</html>

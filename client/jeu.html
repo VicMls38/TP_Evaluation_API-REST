@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="stylesheet" href="css/jeu.css">
+
+    <title>Document</title>
+</head>
+<body>
+    <h1>Le jeu</h1>
+    <div id="game">
+        <p id="msg_test"></p>
+    </div>
+
+    <script src="https://cdn.socket.io/4.1.2/socket.io.min.js"></script>
+    <script>
+        const socket = io('http://localhost:3000');
+
+        let div_game = document.getElementById("game")
+        
+        socket.emit('SwitchPage', 'good');
+
+        socket.on('GoodSwitchPage', (response) => {
+            console.log(response);
+            if (response === 'good') {
+                document.getElementById('msg_test').innerText = 'Page switched successfully!';
+            }
+        });
+        socket.on("Room-1", (response) => {
+            let h1 = document.createElement("h1")
+            h1.setAttribute("id", "RoomName")
+            h1.innerText = response
+            div_game.appendChild(h1)
+        })
+
+        socket.on("nbJoueurs", (response) => {
+            console.log("Nb joueurs : " + response)
+
+            let existingElement = document.getElementById("NbJoueurs");
+
+            if (existingElement) {
+                existingElement.innerText = response;
+            } else {
+                let h2 = document.createElement("h2");
+                h2.setAttribute("id", "NbJoueurs");
+                h2.innerText = response;
+                div_game.appendChild(h2);
+            }
+        });
+
+        socket.on("setDecompte", (decompte, objectif) => {
+    // Nettoyer les anciens éléments DOM s'ils existent
+    let h1_objectif = document.getElementById("Objectif");
+    if (h1_objectif) {
+        h1_objectif.remove();
+    }
+
+    let h1_decompte = document.getElementById("Decompte");
+    if (h1_decompte) {
+        h1_decompte.remove();
+    }
+
+    // Créer et ajouter les nouveaux éléments DOM
+    h1_objectif = document.createElement("h1");
+    h1_objectif.setAttribute("id", "Objectif");
+    h1_objectif.innerText = "L'objectif est : " + objectif;
+    div_game.appendChild(h1_objectif);
+
+    h1_decompte = document.createElement("h1");
+    h1_decompte.setAttribute("id", "Decompte");
+    div_game.appendChild(h1_decompte);
+
+    // Définir la valeur initiale du décompte
+    h1_decompte.innerText = decompte;
+
+    // Mise à jour du décompte chaque seconde
+    let countdownValue = decompte;
+    let countdownInterval = setInterval(() => {
+        h1_decompte.innerText = countdownValue;
+
+        countdownValue--;
+
+        if (countdownValue < 0) {
+            clearInterval(countdownInterval);
+            h1_decompte.remove()
+        }
+    }, 1000);
+});
+
+
+        socket.on("Start", () =>{
+        
+            let btn_stop = document.getElementById("stop_btn");
+            if (btn_stop) {
+                btn_stop.remove();
+            }
+
+            btn_stop = document.createElement("button");
+            btn_stop.setAttribute("id", "Stop_Btn");
+            btn_stop.innerText = "Stop !"
+            btn_stop.addEventListener("click", function(){
+                socket.emit("Stop")
+                btn_stop.remove()
+            })
+            div_game.appendChild(btn_stop);
+
+        
+        })
+
+        socket.on("Time_Stop", (response) => {
+            let h1_timePlayer = document.getElementById("timePlayer");
+            if (h1_timePlayer) {
+                h1_timePlayer.remove();
+            }
+
+            // Créer et ajouter les nouveaux éléments DOM
+            h1_timePlayer = document.createElement("h1");
+            h1_timePlayer.setAttribute("id", "timePlayer");
+            h1_timePlayer.innerText = " Tu as fait : " + response;
+            div_game.appendChild(h1_timePlayer);
+        })
+
+        socket.on("FinalResult", (indexPlayer, TimeOfPlayers) => {
+            TimeOfPlayers = TimeOfPlayers.splice(indexPlayer, 1)
+            
+        })
+
+
+
+    </script>
+</body>
+</html>

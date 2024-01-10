@@ -1,0 +1,11 @@
+#game{
+    width: 100%;
+    height: 90vh;
+    top: 10vh;
+    background-color: antiquewhite;
+}
+
+#Stop_Btn{
+    width: 40%;
+    background-color: yellow;
+}
