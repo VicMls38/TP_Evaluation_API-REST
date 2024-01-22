@@ -8,6 +8,7 @@ const bcrypt = require('bcrypt');
 const { Socket } = require('dgram');
 const { randomInt } = require('crypto');
 const { start } = require('repl');
+const { time } = require('console');
 
 const app = express();
 const server = http.createServer(app);
@@ -37,16 +38,11 @@ const rooms = {
         stopTimes: [0, 0],
         startTime: 0,
         objectif: 0,
-        distanceObj: [0, 0]
+        distanceObj: [0, 0],
+        restartClickCount: 0
     }
 }
 
-Object.keys(rooms).map(k => rooms[k])
-Object.values(rooms)
-
-
-
-["room3231", 'roomsdsdsd3231']
 
 const secretKey = 'yourSecretKey';
 
@@ -138,23 +134,49 @@ io.on('connection', (socket) => {
         rooms.room1.distanceObj[indexPlayer] = distance_Obj
 
         console.log("Tab_objectifs : " + rooms.room1.distanceObj)
+        console.log("TEST boolean : " + rooms.room1.distanceObj.every(ecartObj => ecartObj !== 0))
         const tousNonZero = rooms.room1.distanceObj.every(ecartObj => ecartObj !== 0);
-        if(tousNonZero){
-            if(rooms.room1.distanceObj[0] < rooms.room1.distanceObj[1]){
-                if(indexPlayer == 0){
-                    io.to(socket.id).emit("FinalResult", "WIN")
-                }else{
-                    io.to(socket.id).emit("FinalResult", "LOSE")
-                }
-            }else{
-                io.to(socket.id).emit("FinalResult", "EGALITY")
+        if (tousNonZero) {
+            console.log("INDEXPLAYER : " + indexPlayer)
+            console.log("TEST condition : " + rooms.room1.distanceObj[0] < rooms.room1.distanceObj[1])
+        
+            if (rooms.room1.distanceObj[0] !== rooms.room1.distanceObj[1]) {
+                const winner = (rooms.room1.distanceObj[0] < rooms.room1.distanceObj[1]) ? 0 : 1;
+                const result = (indexPlayer === winner) ? "WIN" : "LOSE";
+                io.to(rooms.room1.sockets[0]).emit("FinalResult", (winner === 0) ? "WIN" : "LOSE");
+                io.to(rooms.room1.sockets[1]).emit("FinalResult", (winner === 1) ? "WIN" : "LOSE");
+                console.log(result);
+            } else {
+                io.to(rooms.room1.sockets[0]).emit("FinalResult", "EGALITY");
+                io.to(rooms.room1.sockets[1]).emit("FinalResult", "EGALITY");
+                console.log("EGALITY");
             }
-            
         }
-    
         
     });
 
+
+    socket.on("Restart", () => {
+        rooms.room1.sockets = [];
+        rooms.room1.stopTimes = [0, 0];
+        rooms.room1.startTime = 0;
+        rooms.room1.objectif = 0;
+        rooms.room1.distanceObj = [0, 0];
+        // Incrémentez le compteur
+        rooms.room1.restartClickCount++;
+    
+        // Vérifiez si les deux joueurs ont cliqué
+        if (rooms.room1.restartClickCount === 2) {
+            // Émettez un événement "Reload" après une pause de 3 secondes
+            setTimeout(() => {
+                console.log("Pause de 3 secondes terminée");
+                io.emit("Reload");
+                // Réinitialisez le compteur
+                rooms.room1.restartClickCount = 0;
+            }, 3000);
+        }
+        io.emit("PlayerReady", rooms.room1.restartClickCount);
+    });
 
 });
 

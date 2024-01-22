@@ -122,10 +122,64 @@
             div_game.appendChild(h1_timePlayer);
         })
 
-        socket.on("FinalResult", (indexPlayer, TimeOfPlayers) => {
-            TimeOfPlayers = TimeOfPlayers.splice(indexPlayer, 1)
+        socket.on("FinalResult", (response) => {
+            console.log("Result : " + response)
+            
+            let h1_result = document.getElementById("finalResult");
+            if (h1_result) {
+                h1_result.remove();
+            }
+
+            let btn_restart = document.getElementById("btn_restart");
+            if (btn_restart) {
+                btn_restart.remove();
+            }
+
+            // Créer et ajouter les nouveaux éléments DOM
+            h1_result = document.createElement("h1");
+            h1_result.setAttribute("id", "finalResult");
+
+            btn_restart = document.createElement("button");
+            btn_restart.setAttribute("id", "btn_restart");
+            btn_restart.innerText = "Restart ?"
+            btn_restart.addEventListener("click", function(){
+                socket.emit("Restart")
+                btn_restart.remove()
+            })
+                        
+            if(response == "WIN"){
+                h1_result.innerText = response;
+            }
+            if(response == "LOSE"){
+                h1_result.innerText = response;
+            }
+            if(response == "EGALITY"){
+                h1_result.innerText = response;
+            }
+            div_game.appendChild(h1_result);
+            div_game.appendChild(btn_restart);
             
         })
+
+        socket.on("PlayerReady", (readyCount) => {
+            console.log("HEYYYY : " + readyCount)
+            const h1_ready = document.createElement("h1");
+            h1_ready.setAttribute("id", `readyMessage-${readyCount}`);
+            h1_ready.innerText = `${readyCount}/2 prêts`;
+            if(readyCount == 2){
+                document.getElementById("readyMessage-1").remove()
+                h1_ready.style.color = "Green"
+            }
+            
+            div_game.appendChild(h1_ready)
+            
+        });
+
+        socket.on("Reload", () => {
+            // Rechargez la page
+            location.reload();
+        });
+        
 
 
 
