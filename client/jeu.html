@@ -25,7 +25,7 @@
         socket.on('GoodSwitchPage', (response) => {
             console.log(response);
             if (response === 'good') {
-                document.getElementById('msg_test').innerText = 'Page switched successfully!';
+                //document.getElementById('msg_test').innerText = 'Page switched successfully!';
             }
         });
         socket.on("Room-1", (response) => {
@@ -45,49 +45,46 @@
             } else {
                 let h2 = document.createElement("h2");
                 h2.setAttribute("id", "NbJoueurs");
-                h2.innerText = response;
+                h2.innerText = "Nombre de joueurs  :" + response;
                 div_game.appendChild(h2);
             }
         });
 
         socket.on("setDecompte", (decompte, objectif) => {
-    // Nettoyer les anciens éléments DOM s'ils existent
-    let h1_objectif = document.getElementById("Objectif");
-    if (h1_objectif) {
-        h1_objectif.remove();
-    }
 
-    let h1_decompte = document.getElementById("Decompte");
-    if (h1_decompte) {
-        h1_decompte.remove();
-    }
+            let h1_objectif = document.getElementById("Objectif");
+            if (h1_objectif) {
+                h1_objectif.remove();
+            }
 
-    // Créer et ajouter les nouveaux éléments DOM
-    h1_objectif = document.createElement("h1");
-    h1_objectif.setAttribute("id", "Objectif");
-    h1_objectif.innerText = "L'objectif est : " + objectif;
-    div_game.appendChild(h1_objectif);
+            let h1_decompte = document.getElementById("Decompte");
+            if (h1_decompte) {
+                h1_decompte.remove();
+            }
 
-    h1_decompte = document.createElement("h1");
-    h1_decompte.setAttribute("id", "Decompte");
-    div_game.appendChild(h1_decompte);
+            h1_objectif = document.createElement("h1");
+            h1_objectif.setAttribute("id", "Objectif");
+            h1_objectif.innerText = "L'objectif est : " + objectif;
+            div_game.appendChild(h1_objectif);
 
-    // Définir la valeur initiale du décompte
-    h1_decompte.innerText = decompte;
+            h1_decompte = document.createElement("h1");
+            h1_decompte.setAttribute("id", "Decompte");
+            div_game.appendChild(h1_decompte);
 
-    // Mise à jour du décompte chaque seconde
-    let countdownValue = decompte;
-    let countdownInterval = setInterval(() => {
-        h1_decompte.innerText = countdownValue;
+            h1_decompte.innerText = decompte;
 
-        countdownValue--;
+            let countdownValue = decompte;
+            let countdownInterval = setInterval(() => {
+                h1_decompte.innerText = countdownValue;
 
-        if (countdownValue < 0) {
-            clearInterval(countdownInterval);
-            h1_decompte.remove()
-        }
-    }, 1000);
-});
+                countdownValue--;
+
+                if (countdownValue < 0) {
+                    clearInterval(countdownInterval);
+                    h1_decompte.remove()
+                }
+            }, 1000);
+        });
 
 
         socket.on("Start", () =>{
@@ -115,7 +112,6 @@
                 h1_timePlayer.remove();
             }
 
-            // Créer et ajouter les nouveaux éléments DOM
             h1_timePlayer = document.createElement("h1");
             h1_timePlayer.setAttribute("id", "timePlayer");
             h1_timePlayer.innerText = " Tu as fait : " + response;
@@ -135,7 +131,6 @@
                 btn_restart.remove();
             }
 
-            // Créer et ajouter les nouveaux éléments DOM
             h1_result = document.createElement("h1");
             h1_result.setAttribute("id", "finalResult");
 
@@ -176,8 +171,13 @@
         });
 
         socket.on("Reload", () => {
-            // Rechargez la page
             location.reload();
+        });
+
+        socket.on("RoomFull", (nbJoueurs) =>{
+            console.log("ROOOOOM FULLLLLLL !!!!!!!")
+            alert("La partie est pleine !!!")
+            window.location.href = 'index.html';
         });
         
 

@@ -36,7 +36,10 @@
             console.log('Authentication Response:', response);
 
             if (response.success) {
-                window.location.href = 'jeu.html'
+                localStorage.setItem('token', response.token);
+                socket.emit('authenticated', { token: response.token });
+                window.location.href = 'jeu.html';
+                window.history.pushState(null, null, '/jeu');
 
             } else {
                 document.getElementById('errorMessage').textContent = response.message;

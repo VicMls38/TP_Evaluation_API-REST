@@ -9,6 +9,7 @@ const { Socket } = require('dgram');
 const { randomInt } = require('crypto');
 const { start } = require('repl');
 const { time } = require('console');
+const { TLSSocket } = require('tls');
 
 const app = express();
 const server = http.createServer(app);
@@ -50,9 +51,28 @@ app.use(express.json());
 app.use(cors());
 
 
+const verifyToken = (socket, next) => {
+    const token = socket.handshake.auth.token;
+
+    if (!token) {
+        return next(new Error('Authentication error: Token not provided'));
+    }
+
+    jwt.verify(token, secretKey, (err, decoded) => {
+        if (err) {
+            return next(new Error('Authentication error: Invalid token'));
+        }
+
+        socket.decoded = decoded;
+        next();
+    });
+};
+
+
 app.get('/', (req, res) => {
-    res.send('hello world ! ');
+    res.sendFile(path.join(__dirname, '../client/index.html'));
 });
+
 
 io.on('connection', (socket) => {
     console.log('A user connected');
@@ -74,8 +94,7 @@ io.on('connection', (socket) => {
         if (valid) {
             const token = jwt.sign({ username }, secretKey, { expiresIn: '1h' });
             socket.emit('authResponse', { success: true, token });
-
-            console.log("OK !!!!")
+            console.log("OK !!!! " +  token)
 
         } else {
             socket.emit('authResponse', { success: false, message: 'Authentication failed' });
@@ -87,18 +106,24 @@ io.on('connection', (socket) => {
         if (response === 'good') {
             socket.emit('GoodSwitchPage', "good");
     
-            socket.join("Room-1");
-            io.to(socket.id).emit("Room-1", "Room-1");
-
-            rooms.room1.sockets.push(socket.id)
-    
             const socketsInRoom = await io.in('Room-1').allSockets();
             console.log('Socket IDs in Room-1:', socketsInRoom);
             const nbClients = socketsInRoom.size;
-            io.to("Room-1").emit("nbJoueurs", nbClients);
-            console.log(nbClients);
+            if(nbClients == 0){
+                socket.join("Room-1");
+                io.to(socket.id).emit("Room-1", "Room-1");
+                rooms.room1.sockets.push(socket.id)
+                io.to("Room-1").emit("nbJoueurs", nbClients);
+            }
+            if(nbClients == 1){
+                socket.join("Room-1");
+                io.to(socket.id).emit("Room-1", "Room-1");
     
-            if (nbClients === 2) {
+                rooms.room1.sockets.push(socket.id)
+        
+                
+                io.to("Room-1").emit("nbJoueurs", nbClients);
+                console.log(nbClients);
                 let decompte = 5;
                 let objectif = Math.floor(Math.random() * (10 - 2 + 1)) + 2;
                 rooms.room1.objectif = objectif
@@ -109,6 +134,8 @@ io.on('connection', (socket) => {
                     io.to("Room-1").emit("Start");
                     rooms.room1.startTime = Date.now();
                 }, (decompte + 1) * 1000);
+            }else if (nbClients >= 2) {
+                socket.emit("RoomFull")
             }
         }
     });
@@ -162,16 +189,13 @@ io.on('connection', (socket) => {
         rooms.room1.startTime = 0;
         rooms.room1.objectif = 0;
         rooms.room1.distanceObj = [0, 0];
-        // Incrémentez le compteur
+
         rooms.room1.restartClickCount++;
     
-        // Vérifiez si les deux joueurs ont cliqué
         if (rooms.room1.restartClickCount === 2) {
-            // Émettez un événement "Reload" après une pause de 3 secondes
             setTimeout(() => {
                 console.log("Pause de 3 secondes terminée");
                 io.emit("Reload");
-                // Réinitialisez le compteur
                 rooms.room1.restartClickCount = 0;
             }, 3000);
         }
